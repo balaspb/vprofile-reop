@@ -1,0 +1,25 @@
+inst_details:   
+        web01:
+         name: nginx01
+         subnet: subnet-80b5bbc9
+        web02:
+         name: nginx02
+         subnet: subnet-e939208e
+
+        app01:
+         name: tomcat01
+         subnet: subnet-80b5bbc9
+        app02:
+         name: tmocat02
+         subnet: subnet-e939208e
+
+        RMQ01:
+         name: RMQ01
+         subnet: subnet-80b5bbc9
+        memcache01:
+         name: memcahe01
+         subnet: subnet-80b5bbc9
+        db01:
+         name: db01
+         subnet: subnet-e939208e
+
