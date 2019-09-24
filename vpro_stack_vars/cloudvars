@@ -1,0 +1,7 @@
+region: ap-southeast-1
+myoffice_ip: 117.98.136.244/32
+insta_type: t2.micro
+ami: ami-03b6f27628a4569c8
+sub1: subnet-80b5bbc9
+sub2: subnet-e939208e 
+

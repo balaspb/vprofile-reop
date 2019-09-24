@@ -1,0 +1,127 @@
+---
+- name: vprofile project setup
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vpro_stack_vars/cloudvars
+  tasks:
+    
+    - name: creating key pair
+      ec2_key:
+        name: vpro-key
+        region: "{{ region }}"
+      register: vpro_key_info
+    - debug:
+        msg: "{{ vpro_key_info }}"
+    - name: copy key to local machine
+      copy:
+        content: "{{ vpro_key_info.key.private_key }}"
+        dest: ./login-vpro-key.pem
+        mode: 0600
+      when: vpro_key_info.changed
+    - name: creating security group of vpro_stack
+      ec2_group:
+        name: SG-vpro-stack
+        description: allow from every where
+        region: "{{ region }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: "{{ myoffice_ip }}"
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: "{{ myoffice_ip }}"
+          - proto: tcp
+            from_port: 3306
+            to_port: 3306
+            cidr_ip: "{{ myoffice_ip }}"
+      register: vprostacksg
+   # - debug:
+    #    msg: "{{ vprostacksg }}"
+    - name: creating security group of vpro_stack
+      ec2_group:
+        name: SG-vpro-stack
+        description: allow from every where
+        region: "{{ region }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: "{{ myoffice_ip }}"
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: "{{ myoffice_ip }}"
+          - proto: tcp
+            from_port: 3306
+            to_port: 3306
+            cidr_ip: "{{ myoffice_ip }}"
+          - proto: all
+            group_id: "{{ vprostacksg.group_id }}"
+      register: vprosgstack
+    - name : creating all machines nginx,tomcat, RMQ,Memcache,db
+      ec2:
+        key_name: vpro-key
+        region: "{{ region }}"
+        instance_type: "{{ insta_type }}"
+        image: "{{ ami }}"
+        wait: yes
+        wait_timeout: 300
+        instance_tags:
+          Name: "{{item.name}}"
+          Project: vprofile
+          Owner: devopsTeam
+        exact_count: 1
+        count_tag:
+          Name: "{{item.name}}"
+          Project: vprofile
+          Owner: devopsTeam
+        group_id:  "{{ vprostacksg.group_id }}"
+        vpc_subnet_id: "{{ item.subnet }}"
+      loop:
+        - name: nginx01
+          subnet: "{{ sub1 }}"
+        - name: nginx02
+          subnet: "{{ sub2 }}"
+        - name: tomcat01
+          subnet: "{{ sub1 }}"
+        - name: tmocat02
+          subnet: "{{ sub2 }}"
+        - name: RMQ01
+          subnet: "{{ sub1 }}"       
+        - name: memcahe01
+          subnet: "{{ sub1 }}"
+        - name: db01
+          subnet: "{{ sub1 }}"
+      register: vproec2info
+    - debug:
+       msg: "{{ vproec2info }}"   
+    - debug:
+       msg: connect instanse with IP "{{ item.name }} ip is {{item.IP}}"
+      loop:
+        - name: nginx01
+          IP: "{{vproec2info.results[0].tagged_instances[0].public_ip}}"
+        - name: nginx02
+          IP: "{{vproec2info.results[1].tagged_instances[0].public_ip}}"
+        - name: tomcat01
+          IP: "{{vproec2info.results[2].tagged_instances[0].public_ip}}"
+
+        - name: tomcat02
+          IP: "{{vproec2info.results[3].tagged_instances[0].public_ip}}"
+        - name: RMQ01
+          IP: "{{vproec2info.results[4].tagged_instances[0].public_ip}}"
+        - name: memcache01
+          IP: "{{vproec2info.results[5].tagged_instances[0].public_ip}}"
+        - name: db01
+          IP: "{{vproec2info.results[6].tagged_instances[0].public_ip}}" 
